@@ -2,8 +2,7 @@
 #' 
 #' Expands the hypersphere radius to account for intensity shifting between non-barcoded samples.
 #' 
-#' @param prepared A \linkS4class{List} object containing a \linkS4class{BiocNeighborIndex} object,
-#' typically produced by \code{\link{prepareCellData}}.
+#' @param prepared A \linkS4class{List} object produced by \code{\link{prepareCellData}}.
 #' @param design A numeric matrix specifying the experimental design.
 #' @param tol A numeric scalar proportional to the hypersphere radius, see \code{\link{countCells}}.
 #' 
@@ -51,16 +50,14 @@
 #' 
 #' @export
 #' @importFrom stats lm.fit
-#' @importFrom BiocNeighbors bndata
 expandRadius <- function(prepared, design=NULL, tol=0.5) {
-    ci <- bndata(prepared$precomputed)
     sample.id <- prepared$sample.id
     nsamples <- nrow(prepared$colData)
 
     # Computing mean intensities for all (used) markers in all samples.
     all.means <- vector("list", nsamples)
     for (s in seq_len(nsamples)) { 
-        all.means[[s]] <- rowMeans(ci[,sample.id==s,drop=FALSE])
+        all.means[[s]] <- rowMeans(prepared$used[,sample.id==s,drop=FALSE])
     }
     all.means <- do.call(rbind, all.means)
     

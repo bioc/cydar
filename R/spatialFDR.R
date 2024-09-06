@@ -1,7 +1,7 @@
 #' @export
-#' @importFrom BiocNeighbors findKNN findNeighbors buildIndex
+#' @importFrom BiocNeighbors findDistance findNeighbors buildIndex
 #' @importFrom methods is
-spatialFDR <- function(x, pvalues, neighbors=50, bandwidth=NULL)
+spatialFDR <- function(x, pvalues, neighbors=50, bandwidth=NULL, num.threads=1)
 # This controls the spatial FDR across a set of plot coordinates.
 # Each point is weighted by the reciprocal of its density, based on the specified 'radius'.
 # A frequency-weighted version of the BH method is then applied to the p-values.
@@ -31,26 +31,26 @@ spatialFDR <- function(x, pvalues, neighbors=50, bandwidth=NULL)
     # Defining the bandwidth.        
     if (is.null(bandwidth)) { 
         neighbors <- as.integer(neighbors)
-        if (neighbors==0L) { 
+        if (neighbors == 0L) { 
             bandwidth <- 0 
         } else if (neighbors < 0L) { 
             stop("'neighbors' must be a non-negative integer") 
         } else { 
             # Figuring out the bandwidth for KDE, as the median of distances to the n-th neighbour.
-            distances <- findKNN(BNINDEX=pre, k=neighbors, get.index=FALSE)$distance
-            bandwidth <- median(distances[,ncol(distances)])
+            distances <- findDistance(pre, k=neighbors, num.threads=num.threads)
+            bandwidth <- median(distances)
         }
     } else {
         bandwidth <- as.double(bandwidth)
     }
 
-    if (bandwidth <= 0) {
+    if (is.na(bandwidth) || bandwidth <= 0) {
         warning("setting a non-positive bandwidth to a small offset")
         bandwidth <- 1e-8 
     }
 
     # Computing densities with a tricube kernel.
-    dist2neighbors <- findNeighbors(BNINDEX=pre, threshold=bandwidth, get.index=FALSE)$distance
+    dist2neighbors <- findNeighbors(pre, threshold=bandwidth, num.threads=num.threads, get.index=FALSE)$distance
     densities <- compute_density(dist2neighbors, bandwidth)
     w <- 1/densities
 

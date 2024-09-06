@@ -2,11 +2,11 @@
 #'
 #' Calculate the distances in high-dimensional space to the neighboring cells.
 #' 
-#' @param prepared A \linkS4class{List} object containing a \linkS4class{BiocNeighborIndex} object,
-#' typically produced by \code{\link{prepareCellData}}.
+#' @param prepared A \linkS4class{List} object produced by \code{\link{prepareCellData}}.
 #' @param neighbors An integer scalar specifying the number of neighbours.
 #' @param downsample An integer scalar specifying the frequency with which cells are examined.
 #' @param as.tol A logical scalar specifying if the distances should be reported as tolerance values.
+#' @param num.threads Integer scalar specifying the number of threads to use.
 #' 
 #' @details
 #' This function examines each cell at the specified downsampling frequency, and computes the Euclidean distances to its nearest neighbors.
@@ -65,7 +65,7 @@
 #'
 #' @export
 #' @importFrom BiocNeighbors findKNN
-neighborDistances <- function(prepared, neighbors=50, downsample=50, as.tol=TRUE)
+neighborDistances <- function(prepared, neighbors=50, downsample=50, as.tol=TRUE, num.threads=1)
 # Calculates the 'tol' required to capture a certain number of neighbors.
 #
 # written by Aaron Lun
@@ -73,13 +73,11 @@ neighborDistances <- function(prepared, neighbors=50, downsample=50, as.tol=TRUE
 {
     pre <- prepared$precomputed
     to.check <- .downsample0(prepared$cell.id, downsample)
+    distances <- findKNN(pre, k=neighbors, get.index=FALSE, subset=to.check, num.threads=num.threads)$distance
 
-    # Computing distances.
-    distances <- findKNN(BNINDEX=pre, k=neighbors, get.index=FALSE, subset=to.check, raw.index=TRUE)$distance
-
-    # Converting to tolerance values, if so desired.
+    # Converting to tolerance values by accounting for the number of used markers.
     if (as.tol) {
-        distances <- distances/sqrt(ncol(pre))
+        distances <- distances / sqrt(nrow(prepared$used))
     }
     distances
 }

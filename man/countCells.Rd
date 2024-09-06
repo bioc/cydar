@@ -7,6 +7,7 @@
 countCells(
   prepared,
   tol = 0.5,
+  num.threads = 1,
   BPPARAM = SerialParam(),
   downsample = 10,
   filter = 10
@@ -16,6 +17,8 @@ countCells(
 \item{prepared}{A \linkS4class{List} object produced by \code{\link{prepareCellData}}.}
 
 \item{tol}{A numeric scalar to be used as the scaling factor for the hypersphere radius.}
+
+\item{num.threads}{Integer scalar specifying the number of threads to use.}
 
 \item{BPPARAM}{A \linkS4class{BiocParallelParam} object specifying how parallelization 
 is to be performed in \code{\link{findNeighbors}}.}
